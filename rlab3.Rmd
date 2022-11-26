@@ -13,12 +13,6 @@ TLN <- "020"
 
 ## Part I: Markov Chain
 
-$$
-\begin{bmatrix}
-1 & 2 & 3\\a & b & c
-\end{bmatrix}
-$$
-
 ```{r}
 m <- 1000
 
@@ -34,4 +28,28 @@ plot(
   x,
   estimate_probability(x), col ="blue", lwd = 3)
 
+```
+
+$$
+P=\begin{bmatrix}
+0.9 & 0.1 & 0 & 0\\
+0.8 & 0.1 & 0.1 & 0\\
+0.9 & 0 & 0 & 0.1\\
+0.8 & 0.1 & 0.1 & 0\\
+\end{bmatrix}
+$$
+
+```{r}
+# Transition matrix
+P = matrix(c(
+  0.9, 0.1, 0, 0,
+  0.8, 0.1, 0.1, 0,
+  0.9, 0, 0, 0.1,
+  0.8, 0.1, 0.1, 0), nrow=4, byrow=T)
+
+left_eigenvector <- eigen(t(P))$vectors[,1]
+sapply(left_eigenvector / sum(left_eigenvector), Re)
+
+# Alternative method
+# P %*% P %*% P
 ```
