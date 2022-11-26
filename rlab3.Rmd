@@ -7,28 +7,20 @@ date: "2022-11-26"
 # Lab3
 
 ```{r}
+TIN <- 20
 
-TLN <- "020"
+# set.seed(TIN) TODO: uncomment
 ```
 
 ## Part I: Markov Chain
 
+### Problem 1
+
 ```{r}
-m <- 1000
-
-estimate_probability <- Vectorize(function (n) {
-  sample_data <- apply(
-    replicate(m, sample(0:9, n, replace = T)), 2,
-    function(x) grepl(TLN, paste(x, collapse = "")))
-  return (length(sample_data[sample_data == TRUE]) / length(sample_data))
-})
-
-x <- seq(100, 1000, by = 100)
-plot(
-  x,
-  estimate_probability(x), col ="blue", lwd = 3)
-
+TLN <- paste("0", TIN, sep = "")
 ```
+
+Transition probabilities matrix:
 
 $$
 P=\begin{bmatrix}
@@ -40,16 +32,91 @@ P=\begin{bmatrix}
 $$
 
 ```{r}
-# Transition matrix
 P = matrix(c(
-  0.9, 0.1, 0, 0,
-  0.8, 0.1, 0.1, 0,
-  0.9, 0, 0, 0.1,
+  0.9, 0.1, 0.0, 0.0,
+  0.8, 0.1, 0.1, 0.0,
+  0.9, 0.0, 0.0, 0.1,
   0.8, 0.1, 0.1, 0), nrow=4, byrow=T)
 
-left_eigenvector <- eigen(t(P))$vectors[,1]
-sapply(left_eigenvector / sum(left_eigenvector), Re)
+calculate_by_eigenvector <- function (probs) {
+  left_eigenvector <- eigen(t(probs))$vectors[,1]
+  return (sapply(left_eigenvector / sum(left_eigenvector), Re))
+}
 
-# Alternative method
-# P %*% P %*% P
+calculate_by_matrix_multiplication <- function (probs) {
+  return ((probs %*% probs %*% probs %*% probs)[1, ])
+}
+
+cat("Transition probabilities (eigenvectors): ", calculate_by_eigenvector(P), "\n")
+cat("Transition probabilities (matrices): ", calculate_by_matrix_multiplication(P))
+
+```
+
+```{r}
+m <- 500
+
+estimate_probability <- Vectorize(function (n) {
+  sample_data <- apply(
+    replicate(m, sample(0:9, n, replace = T)), 2,
+    function(x) grepl(TLN, paste(x, collapse = "")))
+  return (length(sample_data[sample_data == TRUE]) / length(sample_data))
+})
+
+x <- seq(100, 2000, by = 100)
+plot(
+  x,
+  estimate_probability(x), col ="blue", lwd = 3)
+lines(
+  x,
+  (function (n) 1 - (0.999 ^ n))(x))
+```
+
+### Problem 2
+
+Transition probabilities matrix:
+
+$$
+P=\begin{bmatrix}
+0.9 & 0.1 & 0 & 0\\
+0.8 & 0.1 & 0.1 & 0\\
+0.9 & 0 & 0 & 0.1\\
+0 & 0 & 0 & 1\\
+\end{bmatrix}
+$$
+
+$$
+\begin{cases}
+\mu_1=1+0.9\cdot\mu_1+0.1\cdot\mu_2 \\
+\mu_2=1+0.8\cdot\mu_1+0.1\cdot\mu_2+0.1\cdot\mu_3 \\
+\mu_3=1+0.9\cdot\mu_1+0.1\cdot\mu_4 \\
+\mu_4=0
+\end{cases}
+\Rightarrow
+\begin{cases}
+\mu_1=\frac{1+0.1\cdot\frac{1+0.8\cdot\mu_1+0.1\cdot(1+0.9\cdot\mu_1)}{0.9}}{0.1} \\
+\mu_2=\frac{1+0.8\cdot\mu_1+0.1\cdot(1+0.9\cdot\mu_1)}{0.9} \\
+\mu_3=1+0.9\cdot\mu_1 \\
+\mu_4=0
+\end{cases}
+\\
+\begin{cases}
+\mu_1=10+\frac{10}{9}+\frac{8}{9}\mu_1+\frac{1}{9}+\frac{1}{10}\mu_1\Rightarrow\frac{90-80-9}{90}\mu_1=\frac{101}{9}\Rightarrow\mu_1=1010 \\
+\mu_2=\frac{1+0.8\cdot\mu_1+0.1\cdot(1+0.9\cdot\mu_1)}{0.9}=\frac{10}{9}+\frac{8}{10}\mu_1+\frac{1}{9}+\frac{1}{10}\mu_1=\frac{11}{9}+\frac{9}{10}\mu_1=\frac{11}{9}+909=910\frac{2}{9} \\
+\mu_3=1+0.9\cdot\mu_1=1+909=910 \\
+\mu_4=0
+\end{cases}
+$$
+
+```{r}
+
+calculate_length <- Vectorize(function() {
+  values <- vector()
+  length <- 0
+  while (paste(values, collapse = "") != TLN) {
+    values <- tail(append(values, sample(0:9, 1)), nchar(TLN))
+    length <- length + 1
+  }
+  return (length)
+})
+mean(replicate(100, calculate_length()))
 ```
