@@ -53,22 +53,46 @@ cat("Transition probabilities (matrices): ", calculate_by_matrix_multiplication(
 ```
 
 ```{r}
-m <- 500
-
-estimate_probability <- Vectorize(function (n) {
+estimate_probability <- Vectorize(function (m, n) {
   sample_data <- apply(
     replicate(m, sample(0:9, n, replace = T)), 2,
     function(x) grepl(TLN, paste(x, collapse = "")))
   return (length(sample_data[sample_data == TRUE]) / length(sample_data))
 })
 
-x <- seq(100, 2000, by = 100)
+theoretical_probability <- function (n) 1 - ((1 - 0.001) ^ n)
+```
+
+```{r}
+x <- seq(50, 4000, by = 50)
+estimated_data = estimate_probability(100, x)
+theoretical_data = theoretical_probability(x)
+```
+
+```{r}
 plot(
   x,
-  estimate_probability(x), col ="blue", lwd = 3)
+  estimated_data, col ="blue", lwd = 3)
 lines(
   x,
-  (function (n) 1 - (0.999 ^ n))(x))
+  theoretical_data)
+```
+
+```{r}
+plot(
+  x,
+  abs(estimated_data - theoretical_data), col ="blue", lwd = 3, type="l")
+```
+
+```{r}
+x <- seq(100, 1000, by = 100)
+n <- 1000
+m <- 100
+estimated_data = apply(replicate(m, estimate_probability(x, n) - theoretical_probability(n)), 1, function (x) quantile(x, .95))
+plot(
+  x,
+  estimated_data, col ="blue", lwd = 3, type="l")
+abline(h = 0.03, col = "darkgreen")
 ```
 
 ### Problem 2
