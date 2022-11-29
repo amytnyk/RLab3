@@ -209,14 +209,14 @@ estimate_method_3 <- function(data, alpha) {
 estimate_method_4 <- function(data, alpha){
 }
 
-calculate_percentage <- function(n, alpha, method) {
+calculate_percentage <- function(n, alpha, method, generation_method) {
   func <- function (data) method(data, alpha)
-  sample_data <- apply(matrix(rexp(n * m, 1 / theta), nrow = m), 1, func)
+  sample_data <- apply(matrix(generation_method(n * m, 1 / theta), nrow = m), 1, func)
   return (length(sample_data[,sample_data[1,] < theta & theta < sample_data[2,]]) / length(sample_data))
 }
 
-plot_method <- function(n, alpha, method) {
-  func <- Vectorize(function (n) calculate_percentage(n, alpha, method))
+plot_method <- function(n, alpha, method, generation_method) {
+  func <- Vectorize(function (n) calculate_percentage(n, alpha, method, generation_method))
   plot(
     x,
     func(x),
@@ -224,17 +224,17 @@ plot_method <- function(n, alpha, method) {
   )
 }
 
-plot_all <- function (method) {
-  plot_method(x, .1, method)
-  plot_method(x, .05, method)
-  plot_method(x, .01, method)
+plot_all <- function (method, generation_method) {
+  plot_method(x, .1, method, generation_method)
+  plot_method(x, .05, method, generation_method)
+  plot_method(x, .01, method, generation_method)
 }
 ```
 
 ```{r}
-plot_all(estimate_method_1)
+plot_all(estimate_method_1, rexp)
 ```
 
 ```{r}
-plot_all(estimate_method_2)
+plot_all(estimate_method_2, rexp)
 ```
