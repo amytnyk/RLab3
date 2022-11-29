@@ -61,11 +61,12 @@ estimate_probability <- Vectorize(function (m, n) {
 })
 
 theoretical_probability <- function (n) 1 - ((1 - 0.001) ^ n)
+# 0.001 is the limiting probability of the state 4
 ```
 
 ```{r}
-x <- seq(50, 4000, by = 50)
-estimated_data = estimate_probability(100, x)
+x <- seq(100, 2000, by = 100)
+estimated_data = estimate_probability(500, x)
 theoretical_data = theoretical_probability(x)
 ```
 
@@ -78,14 +79,19 @@ lines(
   theoretical_data)
 ```
 
-```{r}
-plot(
-  x,
-  abs(estimated_data - theoretical_data), col ="blue", lwd = 3, type="l")
-```
+$$
+P(|\bar{X}-\mu|\leq\varepsilon)=1-2\Phi(-\frac{\sqrt{n}}{\sigma}\varepsilon) \\
+1-2\Phi(-\frac{\sqrt{n}}{\sigma}\varepsilon)=0.95 \\
+\Phi(-\frac{\sqrt{n}}{\sigma}\varepsilon)=0.025 \\
+\sqrt{n}=-\frac{\sigma\cdot z_{0.025}}{\varepsilon} \\
+n=\sigma^2(\frac{z_{0.025}}{\varepsilon})^2 \\
+n=p_n\cdot(1-p_n)\cdot(\frac{z_{0.025}}{0.03})^2 \\
+n=(1-0.999^{1000})\cdot(0.999^{1000})\cdot(\frac{z_{0.025}}{0.03})^2 \\
+n\sim992 
+$$
 
 ```{r}
-x <- seq(100, 1000, by = 100)
+x <- seq(500, 1000, by = 100)
 n <- 1000
 m <- 100
 estimated_data = apply(replicate(m, estimate_probability(x, n) - theoretical_probability(n)), 1, function (x) quantile(x, .95))
@@ -93,6 +99,16 @@ plot(
   x,
   estimated_data, col ="blue", lwd = 3, type="l")
 abline(h = 0.03, col = "darkgreen")
+```
+
+```{r}
+N <- 1000
+n <- 1000
+m <- 100
+hist(
+  replicate(m, abs(estimate_probability(N, n) - theoretical_probability(n))),
+  main = "Absolute error histogram",
+  xlab = "Absolute error")
 ```
 
 ### Problem 2
