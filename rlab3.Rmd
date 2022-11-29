@@ -9,7 +9,7 @@ date: "2022-11-26"
 ```{r}
 TIN <- 20
 
-# set.seed(TIN) TODO: uncomment
+set.seed(TIN)
 ```
 
 ## Part I: Markov Chain
@@ -182,36 +182,42 @@ var(data) / 5
 
 ```{r}
 theta <- TIN / 10
-m <- 500
+m <- 1000
 x <- seq(100, 500, by=100)
 
 estimate_method_1 <- function(data, alpha) {
   n <- length(data)
-  mu = sum(data) / n
-  start = (2 * n * mu) / (qchisq(df = 2 * n, p = 1 - alpha / 2))
-  end = (2 * n * mu) / (qchisq(df = 2 * n, p = alpha / 2))
-  bounds <- c(start, end)
-  return (bounds)
+  lower = (2 * n * mean(data)) / (qchisq(df = 2 * n, p = 1 - alpha / 2))
+  upper = (2 * n * mean(data)) / (qchisq(df = 2 * n, p = alpha / 2))
+  return (c(lower, upper))
 }
 
 estimate_method_2 <- function(data, alpha) {
   n <- length(data)
-  mu = sum(data)/n
-  start = mu - (theta * qnorm(1 - alpha/2))/sqrt(n)
-  end = mu + (theta * qnorm(1 - alpha/2))/sqrt(n)
-  return (c(start, end))
+  lower = mean(data) - (theta * qnorm(1 - alpha / 2)) / sqrt(n)
+  upper = mean(data) + (theta * qnorm(1 - alpha / 2)) / sqrt(n)
+  return (c(lower, upper))
 }
 
 estimate_method_3 <- function(data, alpha) {
-  
+  n <- length(data)
+  lower = (mean(data) * sqrt(n)) / (qnorm(1 - alpha / 2) + sqrt(n))
+  upper = (mean(data) * sqrt(n)) / (qnorm(alpha / 2) + sqrt(n))
+  return (c(lower, upper))
 }
 
-estimate_method_4 <- function(data, alpha){
+estimate_method_4 <- function(data, alpha) {
+  n <- length(data)
+  lower = mean(data) - qt(1 - alpha / 2, n - 1) * sd(data) / sqrt(n)
+  upper = mean(data) + qt(1 - alpha / 2, n - 1) * sd(data) / sqrt(n)
+  return (c(lower, upper))
 }
 
 calculate_percentage <- function(n, alpha, method, generation_method) {
   func <- function (data) method(data, alpha)
-  sample_data <- apply(matrix(generation_method(n * m, 1 / theta), nrow = m), 1, func)
+  gen_method <- if (generation_method == "rexp") rexp else rpois
+  mn <- if (generation_method == "rexp") 1 / theta else theta
+  sample_data <- apply(matrix(gen_method(n * m, mn), nrow = m), 1, func)
   return (length(sample_data[,sample_data[1,] < theta & theta < sample_data[2,]]) / length(sample_data))
 }
 
@@ -220,7 +226,8 @@ plot_method <- function(n, alpha, method, generation_method) {
   plot(
     x,
     func(x),
-    type = "l"
+    type = "l",
+    main = paste("Alpha is", alpha)
   )
 }
 
@@ -232,9 +239,35 @@ plot_all <- function (method, generation_method) {
 ```
 
 ```{r}
-plot_all(estimate_method_1, rexp)
+plot_all(estimate_method_1, "rexp")
 ```
 
 ```{r}
-plot_all(estimate_method_2, rexp)
+plot_all(estimate_method_2, "rexp")
 ```
+
+```{r}
+plot_all(estimate_method_3, "rexp")
+```
+
+```{r}
+plot_all(estimate_method_4, "rexp")
+```
+
+### Problem 4
+
+```{r}
+plot_all(estimate_method_2, "rpois")
+```
+
+```{r}
+plot_all(estimate_method_3, "rpois")
+```
+
+```{r}
+plot_all(estimate_method_4, "rpois")
+```
+
+#### Conclusion
+
+As we can see all the methods give almost the same results
