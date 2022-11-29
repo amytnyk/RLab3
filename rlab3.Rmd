@@ -180,38 +180,62 @@ var(data) / 5
 
 ### Problem 3
 
-$$
-
-$$
-
 ```{r}
 theta <- TIN / 10
-m <- 10
+m <- 500
+x <- seq(100, 500, by=100)
 
 estimate_method_1 <- function(data, alpha) {
-  
+  n <- length(data)
+  mu = sum(data) / n
+  start = (2 * n * mu) / (qchisq(df = 2 * n, p = 1 - alpha / 2))
+  end = (2 * n * mu) / (qchisq(df = 2 * n, p = alpha / 2))
+  bounds <- c(start, end)
+  return (bounds)
 }
 
 estimate_method_2 <- function(data, alpha) {
-  
+  n <- length(data)
+  mu = sum(data)/n
+  start = mu - (theta * qnorm(1 - alpha/2))/sqrt(n)
+  end = mu + (theta * qnorm(1 - alpha/2))/sqrt(n)
+  return (c(start, end))
 }
 
 estimate_method_3 <- function(data, alpha) {
   
 }
 
-estimate_method_4 <- function(data, alpha) {
-  
+estimate_method_4 <- function(data, alpha){
 }
 
 calculate_percentage <- function(n, alpha, method) {
-  sample_data <- apply(matrix(rexp(n, 1 / theta), nrow=m), 2, method)
-  return (length(sample_data[sample_data[0] < theta & sample_data[1] < theta]) / length(sample_data))
+  func <- function (data) method(data, alpha)
+  sample_data <- apply(matrix(rexp(n * m, 1 / theta), nrow = m), 1, func)
+  cmp <- Vectorize(function (x) x[1])
+  return (length(sample_data[,sample_data[1,] < theta & theta < sample_data[2,]]) / length(sample_data))
 }
 
+plot_method <- function(n, alpha, method) {
+  func <- Vectorize(function (n) calculate_percentage(n, alpha, method))
+  plot(
+    x,
+    func(x),
+    type = "l"
+  )
+}
 
-plot(
-  
-)
+plot_all <- function (method) {
+  plot_method(x, .1, method)
+  plot_method(x, .05, method)
+  plot_method(x, .01, method)
+}
+```
 
+```{r}
+plot_all(estimate_method_1)
+```
+
+```{r}
+plot_all(estimate_method_2)
 ```
