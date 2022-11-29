@@ -141,14 +141,15 @@ $$
 \\
 \begin{cases}
 \mu_1=10+\frac{10}{9}+\frac{8}{9}\mu_1+\frac{1}{9}+\frac{1}{10}\mu_1\Rightarrow\frac{90-80-9}{90}\mu_1=\frac{101}{9}\Rightarrow\mu_1=1010 \\
-\mu_2=\frac{1+0.8\cdot\mu_1+0.1\cdot(1+0.9\cdot\mu_1)}{0.9}=\frac{10}{9}+\frac{8}{10}\mu_1+\frac{1}{9}+\frac{1}{10}\mu_1=\frac{11}{9}+\frac{9}{10}\mu_1=\frac{11}{9}+909=910\frac{2}{9} \\
+\mu_2=\frac{1+0.8\cdot\mu_1+0.1\cdot(1+0.9\cdot\mu_1)}{0.9}=\frac{10}{9}+\frac{8}{9}\mu_1+\frac{1}{9}+\frac{1}{10}\mu_1=\frac{11}{9}+\frac{89}{90}\mu_1=1000 \\
 \mu_3=1+0.9\cdot\mu_1=1+909=910 \\
 \mu_4=0
 \end{cases}
 $$
 
-```{r}
+Hence, the estimated length is $\mu_1=1010$
 
+```{r}
 calculate_length <- Vectorize(function() {
   values <- vector()
   length <- 0
@@ -158,5 +159,19 @@ calculate_length <- Vectorize(function() {
   }
   return (length)
 })
-mean(replicate(100, calculate_length()))
+
+data <- replicate(100, calculate_length())
+mean(data)
+```
+
+$$
+P(|\hat{\theta}-\theta|<k\sigma)=1-
+P(|\hat{\theta}-\theta|\geq k\sigma)\geq1-\frac{\sigma^2}{\sigma^2k^2}=1-\frac{1}{k^2} \\
+1-\frac{1}{k^2}=0.95\Rightarrow k^2=20 \\
+\sigma=\frac{\sigma_S}{\sqrt{n}} \\
+k\sigma=10\Rightarrow\frac{\sigma_S}{\sqrt{n}}=\frac{10}{k}\Rightarrow n=\frac{\sigma_S^2\cdot k^2}{100}=\frac{\sigma_S^2}{5}
+$$
+
+```{r}
+var(data) / 5
 ```
