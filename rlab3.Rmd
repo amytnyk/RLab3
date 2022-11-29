@@ -175,3 +175,43 @@ $$
 ```{r}
 var(data) / 5
 ```
+
+## Part II: Parameter estimation
+
+### Problem 3
+
+$$
+
+$$
+
+```{r}
+theta <- TIN / 10
+m <- 10
+
+estimate_method_1 <- function(data, alpha) {
+  
+}
+
+estimate_method_2 <- function(data, alpha) {
+  
+}
+
+estimate_method_3 <- function(data, alpha) {
+  
+}
+
+estimate_method_4 <- function(data, alpha) {
+  
+}
+
+calculate_percentage <- function(n, alpha, method) {
+  sample_data <- apply(matrix(rexp(n, 1 / theta), nrow=m), 2, method)
+  return (length(sample_data[sample_data[0] < theta & sample_data[1] < theta]) / length(sample_data))
+}
+
+
+plot(
+  
+)
+
+```
