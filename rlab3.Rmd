@@ -31,6 +31,8 @@ P=\begin{bmatrix}
 \end{bmatrix}
 $$
 
+Calculating limiting probabilities with two methods (using eigenvectors and multiplying matrices):
+
 ```{r}
 P = matrix(c(
   0.9, 0.1, 0.0, 0.0,
@@ -52,6 +54,8 @@ cat("Limiting probabilities (matrices): ", calculate_by_matrix_multiplication(P)
 
 ```
 
+Here are two functions for estimating theoretical and numerical probabilities of occurrence of TLN in the randomly generated digit sequence:
+
 ```{r}
 estimate_probability <- Vectorize(function (m, n) {
   sample_data <- apply(
@@ -63,6 +67,8 @@ estimate_probability <- Vectorize(function (m, n) {
 theoretical_probability <- function (n) 1 - ((1 - 0.001) ^ n)
 # 0.001 is the limiting probability of the state 4
 ```
+
+Calculating these probabilities for different sample sizes:
 
 ```{r}
 x <- seq(100, 2000, by = 100)
@@ -149,6 +155,8 @@ $$
 
 Hence, the estimated length is $\mu_1=1010$
 
+Calculating expected time till absorption numerically:
+
 ```{r}
 calculate_length <- Vectorize(function() {
   values <- vector()
@@ -164,6 +172,8 @@ data <- replicate(100, calculate_length())
 mean(data)
 ```
 
+Now, let's find the sample size $N$ which guarantees that the absolute error $|\hat{\theta} − \theta|$ of the estimate does not exceed 10 with confidence level of at least $95$ percent. By Chebyshev inequality:
+
 $$
 P(|\hat{\theta}-\theta|<k\sigma)=1-
 P(|\hat{\theta}-\theta|\geq k\sigma)\geq1-\frac{\sigma^2}{\sigma^2k^2}=1-\frac{1}{k^2} \\
@@ -171,6 +181,8 @@ P(|\hat{\theta}-\theta|\geq k\sigma)\geq1-\frac{\sigma^2}{\sigma^2k^2}=1-\frac{1
 \sigma=\frac{\sigma_S}{\sqrt{n}} \\
 k\sigma=10\Rightarrow\frac{\sigma_S}{\sqrt{n}}=\frac{10}{k}\Rightarrow n=\frac{\sigma_S^2\cdot k^2}{100}=\frac{\sigma_S^2}{5}
 $$
+
+Now, knowing how to find the needed sample size, we can numerically calculate variance and use it in the formula above:
 
 ```{r}
 var(data) / 5
@@ -185,12 +197,14 @@ theta <- TIN / 10
 m <- 3000
 x <- seq(100, 500, by=100)
 
+
 estimate_method_1 <- function(data, alpha) {
   n <- length(data)
   lower = (2 * sum(data)) / (qchisq(df = 2 * n, p = 1 - alpha / 2))
   upper = (2 * sum(data)) / (qchisq(df = 2 * n, p = alpha / 2))
   return (c(lower, upper))
 }
+
 
 estimate_method_2 <- function(data, alpha) {
   n <- length(data)
@@ -199,12 +213,14 @@ estimate_method_2 <- function(data, alpha) {
   return (c(lower, upper))
 }
 
+
 estimate_method_3 <- function(data, alpha) {
   n <- length(data)
   lower = (mean(data) * sqrt(n)) / (qnorm(1 - alpha / 2) + sqrt(n))
   upper = (mean(data) * sqrt(n)) / (qnorm(alpha / 2) + sqrt(n))
   return (c(lower, upper))
 }
+
 
 estimate_method_4 <- function(data, alpha) {
   n <- length(data)
@@ -213,6 +229,7 @@ estimate_method_4 <- function(data, alpha) {
   return (c(lower, upper))
 }
 
+
 calculate_percentage <- function(n, alpha, method, generation_method) {
   func <- function (data) method(data, alpha)
   gen_method <- if (generation_method == "rexp") rexp else rpois
@@ -220,6 +237,7 @@ calculate_percentage <- function(n, alpha, method, generation_method) {
   sample_data <- apply(matrix(gen_method(n * m, mn), nrow = m), 1, func)
   return (length(sample_data[,sample_data[1,] < theta & theta < sample_data[2,]]) / length(sample_data))
 }
+
 
 plot_method <- function(n, alpha, method, generation_method) {
   func <- Vectorize(function (n) calculate_percentage(n, alpha, method, generation_method))
@@ -230,6 +248,7 @@ plot_method <- function(n, alpha, method, generation_method) {
     main = paste("Alpha is", alpha)
   )
 }
+
 
 plot_all <- function (method, generation_method) {
   plot_method(x, .1, method, generation_method)
@@ -258,9 +277,63 @@ Therefore, $[\frac{2\sum^n_{i=1}X_i}{\chi^{2n}_{1-\alpha/2}},\frac{2\sum^n_{i=1}
 plot_all(estimate_method_1, "rexp")
 ```
 
+#### Method 2
+
+Here we form the Z-statistics $Z:= \frac{\sqrt{n}  \cdot (\bar{X} - \theta) }{(\theta) } \sim N(0 , 1)$ to find that:
+
+$$
+P(|\theta - \bar{X}| \le \frac{z_{\beta} \cdot \theta}{\sqrt{n}}) = P(|Z| \le z_{\beta}) = 2\beta-1
+$$
+
+We devide everything by $\theta$. Then we open our module , then rearrange the left part. In the end we multiply by $-1$ and multiply everything by $\bar{X}$):
+
+$$
+Z:= \frac{\sqrt{n}  \cdot (\bar{X} - \theta) }{(\theta) } \sim N(0 , 1)\\1- \alpha = P((|\bar{X} - \theta|) \le \frac{\theta \cdot z_{1 - \frac{\alpha}{2}}} {\sqrt{n}}) = P((|1 - \frac{\bar{X}}{\theta}|) \le \frac{ z_{1 - \frac{\alpha}{2}}} {\sqrt{n}}) \\= P(1 - \frac{z_{1 - \frac{\alpha}{2}}}{\sqrt{n}}  \le \frac{\bar{X}}{\theta} \le 1 + \frac{z_{1 - \frac{\alpha}{2}}}{\sqrt{n}}) =  P( \frac{\sqrt{n} +z_{1\frac{\alpha}{2}}}{\sqrt{n}}  \le \frac{\bar{X}}{\theta} \le  \frac{\sqrt{n} + z_{1 - \frac{\alpha}{2}}}{\sqrt{n}}) = \\ P (\frac{\sqrt{n} \cdot \bar{X}}{\sqrt{n} + z_{1 - \frac{\alpha}{2}}}  \le \theta \le  \frac{\sqrt{n} \cdot \bar{X}}{\sqrt{n} + z_{\frac{\alpha}{2}}}) \\ 1 - \alpha = [\frac{\sqrt{n} \cdot \bar{X}}{\sqrt{n} + z_{1 - \frac{\alpha}{2}}} ; \frac{\sqrt{n} \cdot \bar{X}}{\sqrt{n} + z_{\frac{\alpha}{2}}}]
+$$
+
 ```{r}
 plot_all(estimate_method_2, "rexp")
 ```
+
+#### Method 3
+
+Now we have to calculate confidence interval with the unknown variance $s^2 = \theta^2$ . To do that, we have to solve a double inequality:
+
+$$
+|\bar{X} - \theta| \le \frac{z_{\beta} \cdot \theta}{\sqrt{n}}
+$$
+
+$$
+P(|\bar{X} - \theta| \le \frac{z_{1-\frac{\alpha}{2}} \cdot \theta}{\sqrt{n}})
+$$
+
+divide both sides by $\theta$ :
+
+$$
+P(|\frac{\bar{X}}{\theta} - 1| \le \frac{z_{1-\frac{\alpha}{2}}}{\sqrt{n}})
+$$
+
+$$
+P(-\frac{z_{1-\frac{\alpha}{2}}}{\sqrt{n}} \le \frac{\bar{X}}{\theta} - 1 \le \frac{z_{1-\frac{\alpha}{2}}}{\sqrt{n}})
+$$
+
+$$
+P(1-\frac{z_{1-\frac{\alpha}{2}}}{\sqrt{n}} \le \frac{\bar{X}}{\theta} \le \frac{z_{1-\frac{\alpha}{2}}}{\sqrt{n}}+1)
+$$
+
+$$
+P(\frac{\sqrt{n}-z_{1-\frac{\alpha}{2}}}{\sqrt{n}} \le \frac{\theta}{\bar{X}} \le \frac{\sqrt{n}z_{1-\frac{\alpha}{2}}}{\sqrt{n}})
+$$
+
+$$
+P(\bar{X} \cdot \frac{\sqrt{n}-z_{1-\frac{\alpha}{2}}}{\sqrt{n}} \le \theta \le \bar{X} \cdot \frac{\sqrt{n}z_{1-\frac{\alpha}{2}}}{\sqrt{n}})
+$$
+
+Hence, we obtain the next confidence interval of level $1-\alpha$ :
+
+$$
+[\bar{X} \cdot \frac{\sqrt{n}-z_{1-\frac{\alpha}{2}}}{\sqrt{n}};  \bar{X} \cdot \frac{\sqrt{n}z_{1-\frac{\alpha}{2}}}{\sqrt{n}}]
+$$
 
 ```{r}
 plot_all(estimate_method_3, "rexp")
@@ -284,13 +357,19 @@ plot_all(estimate_method_4, "rexp")
 
 ### Problem 4
 
+#### Method 2
+
 ```{r}
 plot_all(estimate_method_2, "rpois")
 ```
 
+#### Method 3
+
 ```{r}
 plot_all(estimate_method_3, "rpois")
 ```
+
+#### Method 4
 
 ```{r}
 plot_all(estimate_method_4, "rpois")
@@ -298,4 +377,4 @@ plot_all(estimate_method_4, "rpois")
 
 #### Conclusion
 
-As we can see all the methods give almost the same results
+Completing this task, we have obtained a better and more deep understanding of parameter estimation topic and have also recalled Markov chains. We have also verified that the interval estimates produced by the known rules indeed contain the parameter with probability equal to the confidence level and made a conclusion, that all four methods give more or less equal evaluation of the interval, except for the case with Poisson distribution and method 3: compared to method 2 and 4 it gives a less accurate estimate.
