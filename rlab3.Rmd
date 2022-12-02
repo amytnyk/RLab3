@@ -47,8 +47,8 @@ calculate_by_matrix_multiplication <- function (probs) {
   return ((probs %*% probs %*% probs %*% probs)[1, ])
 }
 
-cat("Transition probabilities (eigenvectors): ", calculate_by_eigenvector(P), "\n")
-cat("Transition probabilities (matrices): ", calculate_by_matrix_multiplication(P))
+cat("Limiting probabilities (eigenvectors): ", calculate_by_eigenvector(P), "\n")
+cat("Limiting probabilities (matrices): ", calculate_by_matrix_multiplication(P))
 
 ```
 
@@ -79,7 +79,7 @@ lines(
   theoretical_data)
 ```
 
-$$
+Since $\bar{X}$ is our sample mean $M_n$ and $\mu$ is our theoretical mean, let $Z_n := \frac{\sqrt{n}}{\sigma}(M_n-\mu)$ be a random variable and, according to the Central Limit Theorem, it converges in law to the standard Gaussian random variable $Z \sim N(0,1)$ . Since we need to find a sample size $N$ which would guarantee that the absolute error of the estimate is below $0.03$ with confidence level of at least $95$ percent, we obtain the next equation:$$
 P(|\bar{X}-\mu|\leq\varepsilon)=1-2\Phi(-\frac{\sqrt{n}}{\sigma}\varepsilon) \\
 1-2\Phi(-\frac{\sqrt{n}}{\sigma}\varepsilon)=0.95 \\
 \Phi(-\frac{\sqrt{n}}{\sigma}\varepsilon)=0.025 \\
@@ -91,7 +91,7 @@ n\sim992
 $$
 
 ```{r}
-x <- seq(500, 1000, by = 100)
+x <- seq(300, 800, by = 100)
 n <- 1000
 m <- 100
 estimated_data = apply(replicate(m, estimate_probability(x, n) - theoretical_probability(n)), 1, function (x) quantile(x, .95))
@@ -182,13 +182,13 @@ var(data) / 5
 
 ```{r}
 theta <- TIN / 10
-m <- 1000
+m <- 3000
 x <- seq(100, 500, by=100)
 
 estimate_method_1 <- function(data, alpha) {
   n <- length(data)
-  lower = (2 * n * mean(data)) / (qchisq(df = 2 * n, p = 1 - alpha / 2))
-  upper = (2 * n * mean(data)) / (qchisq(df = 2 * n, p = alpha / 2))
+  lower = (2 * sum(data)) / (qchisq(df = 2 * n, p = 1 - alpha / 2))
+  upper = (2 * sum(data)) / (qchisq(df = 2 * n, p = alpha / 2))
   return (c(lower, upper))
 }
 
@@ -238,6 +238,22 @@ plot_all <- function (method, generation_method) {
 }
 ```
 
+#### Method 1
+
+Let $Y_k=2\lambda X_k$. Hence $F_{Y_k}=P(Y_k\leq x)=P(2\lambda X_k\leq x)=P(X_k\leq\frac{x}{2\lambda})=F_{X_k}(\frac{x}{2\lambda})$
+
+Taking the derivative on both sides:$f_{Y_{k}}( x) =\frac{1}{2\lambda } f_{X_{k}}( x) =\frac{1}{2\lambda } \lambda e^{-\lambda \frac{x}{2\lambda }} =\frac{1}{2} e^{-\frac{1}{2} x}$. Therefore, $Y_{k} \sim \mathcal{E}\left(\frac{1}{2}\right)$
+
+Let's introduce statistics $T=2\lambda n\overline{X} =2\lambda \cdotp ( X_{1} +…+X_{n}) =Y_{1} +…+Y_{n}$.
+
+Hence, $T\sim \Gamma \left( n,\ \frac{1}{2}\right) \sim \chi _{2n}^{2}$
+
+Then, $P(\chi^{2n}_{\alpha/2}\leq2\lambda n\bar X\leq\chi^{2n}_{1-\alpha/2})=1-\alpha/2-\alpha/2=1-\alpha$.
+
+$P(\chi^{2n}_{\alpha/2}\leq2\lambda n\bar X\leq\chi^{2n}_{1-\alpha/2})=P(\frac{\chi^{2n}_{\alpha/2}}{2\sum^n_{i=1}X_i}\leq\lambda \leq\frac{\chi^{2n}_{1-\alpha/2}}{2\sum^n_{i=1}X_i})=P(\frac{2\sum^n_{i=1}X_i}{\chi^{2n}_{1-\alpha/2}}\leq\theta \leq\frac{2\sum^n_{i=1}X_i}{\chi^{2n}_{\alpha/2}})=1-\alpha$
+
+Therefore, $[\frac{2\sum^n_{i=1}X_i}{\chi^{2n}_{1-\alpha/2}},\frac{2\sum^n_{i=1}X_i}{\chi^{2n}_{\alpha/2}}]$ is $100(1-\alpha)$ confidence interval for $\theta$
+
 ```{r}
 plot_all(estimate_method_1, "rexp")
 ```
@@ -249,6 +265,18 @@ plot_all(estimate_method_2, "rexp")
 ```{r}
 plot_all(estimate_method_3, "rexp")
 ```
+
+#### Method 4
+
+Let $T=(\bar X-\mu)\frac{\sqrt n}{S}\sim\mathcal{T}_{n-1}$ (as described in Ross textbook)
+
+Hence, $P(t^{(n-1)}_{\alpha/2}\leq(\bar X-\mu)\frac{\sqrt n}{S}\leq t^{(n-1)}_{1-\alpha/2})=1-\alpha/2-\alpha/2=1-\alpha$.
+
+$P(t^{(n-1)}_{\alpha/2}\leq(\bar X-\mu)\frac{\sqrt n}{S}\leq t^{(n-1)}_{1-\alpha/2})=P(-t^{(n-1)}_{\alpha/2}\frac{S}{\sqrt n}\geq\mu-\bar X\geq -t^{(n-1)}_{1-\alpha/2}\frac{S}{\sqrt n})=$
+
+$=P(\bar X-t^{(n-1)}_{1-\alpha/2}\frac{S}{\sqrt n}\leq\mu\leq\bar X-t^{(n-1)}_{\alpha/2}\frac{S}{\sqrt n})=1-\alpha$
+
+Thus, $[\bar X-t^{(n-1)}_{1-\alpha/2}\frac{S}{\sqrt n},\bar X+t^{(n-1)}_{1-\alpha/2}\frac{S}{\sqrt n}]$ is $100(1-\alpha)$ confidence interval for $\theta$
 
 ```{r}
 plot_all(estimate_method_4, "rexp")
